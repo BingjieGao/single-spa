@@ -68,7 +68,10 @@ function urlReroute() {
 
 // We will trigger an app change for any routing events.
 window.addEventListener('hashchange', urlReroute);
-window.addEventListener('popstate', urlReroute);
+window.addEventListener('popstate', (args) => {
+  window.isNavGoOrBack = true;
+  urlReroute(args);
+});
 
 // Monkeypatch addEventListener so that we can ensure correct timing
 const originalAddEventListener = window.addEventListener;
@@ -98,7 +101,7 @@ window.removeEventListener = function(eventName, listenerFn) {
 const originalPushState = window.history.pushState;
 window.history.pushState = function(state) {
   const result = originalPushState.apply(this, arguments);
-
+  window.isNavGoOrBack = false;
   urlReroute(createPopStateEvent(state));
   
   return result;
@@ -107,7 +110,7 @@ window.history.pushState = function(state) {
 const originalReplaceState = window.history.replaceState;
 window.history.replaceState = function(state) {
   const result = originalReplaceState.apply(this, arguments);
-  urlReroute(createPopStateEvent(state));
+  if (window.isNavGoOrBack) urlReroute(createPopStateEvent(state));
   return result;
 }
 
